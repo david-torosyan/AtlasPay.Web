@@ -1,8 +1,8 @@
-import { StrictMode, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider, type AuthProviderProps } from 'react-oidc-context'
-import { WebStorageStateStore } from 'oidc-client-ts'
+import { InMemoryWebStorage, WebStorageStateStore } from 'oidc-client-ts'
 import App from './App'
 import { loadConfig } from './config'
 import type { PublicConfig } from './types'
@@ -31,7 +31,8 @@ function Bootstrap() {
     accessTokenExpiringNotificationTimeInSeconds: 60,
     silentRequestTimeoutInSeconds: 10,
     monitorSession: true,
-    userStore: new WebStorageStateStore({ store: window.sessionStorage }),
+    stateStore: new WebStorageStateStore({ store: window.sessionStorage }),
+    userStore: new WebStorageStateStore({ store: new InMemoryWebStorage() }),
     onSigninCallback: () => window.history.replaceState({}, document.title, '/dashboard'),
   }
 
@@ -44,8 +45,4 @@ function Bootstrap() {
   )
 }
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <Bootstrap />
-  </StrictMode>,
-)
+createRoot(document.getElementById('root')!).render(<Bootstrap />)

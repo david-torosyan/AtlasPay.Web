@@ -50,3 +50,4 @@ Desktop.ini
 
 # Local Codex artifacts
 .codex-run/
+/appsettings.json

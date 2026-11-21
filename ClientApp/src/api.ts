@@ -73,6 +73,7 @@ export function createApi(config: PublicConfig, token: string) {
     getProfile: () => request<AtlasUser>('/api/profile', token),
     createAccount: (currency: Currency) =>
       request<{ accountId: string }>(`${finance}/api/accounts`, token, json({ currency })),
+    getAccounts: () => request<Account[]>(`${finance}/api/accounts`, token),
     getAccount: (id: string) => request<Account>(`${finance}/api/accounts/${id}`, token),
     getBalance: (id: string) => request<Balance>(`${finance}/api/accounts/${id}/balance`, token),
     getTransactions: (id: string, page = 1) =>

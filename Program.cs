@@ -84,8 +84,7 @@ app.MapGet("/api/config", (IOptions<AtlasPayOptions> options) =>
         silentRedirectUrl = value.Application.SilentRedirectUrl,
         postLogoutRedirectUrl = value.Application.PostLogoutRedirectUrl,
         financeApiUrl = value.Application.FinanceGatewayPath,
-        notificationApiUrl = value.Application.NotificationGatewayPath,
-        knownAccountStoragePrefix = value.Application.KnownAccountStoragePrefix
+        notificationApiUrl = value.Application.NotificationGatewayPath
     });
 });
 

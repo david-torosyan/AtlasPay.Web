@@ -8,7 +8,6 @@ export interface PublicConfig {
   postLogoutRedirectUrl: string
   financeApiUrl: string
   notificationApiUrl: string
-  knownAccountStoragePrefix: string
 }
 
 export type Currency = 'AMD' | 'USD' | 'EUR'

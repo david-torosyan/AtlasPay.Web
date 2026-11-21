@@ -35,5 +35,4 @@ public sealed class ApplicationOptions
     public string BffUrl { get; init; } = string.Empty;
     public string FinanceGatewayPath { get; init; } = string.Empty;
     public string NotificationGatewayPath { get; init; } = string.Empty;
-    public string KnownAccountStoragePrefix { get; init; } = string.Empty;
 }

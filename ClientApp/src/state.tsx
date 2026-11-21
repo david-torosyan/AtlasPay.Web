@@ -1,16 +1,17 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useAuth } from 'react-oidc-context'
 import { createApi } from './api'
-import type { Account, AtlasUser, PublicConfig } from './types'
+import type { Account, AtlasUser, PublicConfig, Transaction } from './types'
 
 interface AtlasState {
   accounts: Account[]
+  transactionsByAccount: Record<string, Transaction[]>
+  transactionErrors: Record<string, string>
+  transactionsLoading: boolean
   profile?: AtlasUser
   loading: boolean
   error?: string
   refresh: () => Promise<void>
-  rememberAccount: (id: string) => Promise<void>
-  forgetAccount: (id: string) => void
 }
 
 const Context = createContext<AtlasState | undefined>(undefined)
@@ -24,69 +25,70 @@ export function AtlasStateProvider({
 }) {
   const auth = useAuth()
   const token = auth.user?.access_token ?? ''
-  const subject = auth.user?.profile.sub ?? 'anonymous'
-  const storageKey = `${config.knownAccountStoragePrefix}.${subject}`
   const api = useMemo(() => createApi(config, token), [config, token])
   const [accounts, setAccounts] = useState<Account[]>([])
+  const [transactionsByAccount, setTransactionsByAccount] = useState<Record<string, Transaction[]>>({})
+  const [transactionErrors, setTransactionErrors] = useState<Record<string, string>>({})
+  const [transactionsLoading, setTransactionsLoading] = useState(false)
   const [profile, setProfile] = useState<AtlasUser>()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>()
-
-  const getIds = useCallback((): string[] => {
-    try {
-      return JSON.parse(localStorage.getItem(storageKey) ?? '[]') as string[]
-    } catch {
-      return []
-    }
-  }, [storageKey])
 
   const refresh = useCallback(async () => {
     if (!token) return
     setLoading(true)
     setError(undefined)
     try {
-      const ids = getIds()
-      const [user, accountResults] = await Promise.all([
+      const [user, nextAccounts] = await Promise.all([
         api.getProfile(),
-        Promise.allSettled(ids.map((id) => api.getAccount(id))),
+        api.getAccounts(),
       ])
       setProfile(user)
-      setAccounts(
-        accountResults.flatMap((result) => (result.status === 'fulfilled' ? [result.value] : [])),
+      setAccounts(nextAccounts)
+      setLoading(false)
+
+      if (!nextAccounts.length) {
+        setTransactionsByAccount({})
+        setTransactionErrors({})
+        return
+      }
+
+      setTransactionsLoading(true)
+      const histories = await Promise.allSettled(
+        nextAccounts.map((account) => api.getTransactions(account.accountId)),
       )
+      const nextTransactions: Record<string, Transaction[]> = {}
+      const nextTransactionErrors: Record<string, string> = {}
+
+      histories.forEach((result, index) => {
+        const accountId = nextAccounts[index].accountId
+        if (result.status === 'fulfilled') {
+          nextTransactions[accountId] = result.value.items
+        } else {
+          nextTransactions[accountId] = []
+          nextTransactionErrors[accountId] = result.reason instanceof Error
+            ? result.reason.message
+            : 'Transaction history could not be loaded.'
+        }
+      })
+
+      setTransactionsByAccount(nextTransactions)
+      setTransactionErrors(nextTransactionErrors)
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'AtlasPay data could not be loaded.')
     } finally {
       setLoading(false)
+      setTransactionsLoading(false)
     }
-  }, [api, getIds, token])
+  }, [api, token])
 
   useEffect(() => {
     void refresh()
   }, [refresh])
 
-  const rememberAccount = useCallback(
-    async (id: string) => {
-      const account = await api.getAccount(id)
-      const ids = Array.from(new Set([...getIds(), id]))
-      localStorage.setItem(storageKey, JSON.stringify(ids))
-      setAccounts((current) => [...current.filter((item) => item.accountId !== id), account])
-    },
-    [api, getIds, storageKey],
-  )
-
-  const forgetAccount = useCallback(
-    (id: string) => {
-      const ids = getIds().filter((item) => item !== id)
-      localStorage.setItem(storageKey, JSON.stringify(ids))
-      setAccounts((current) => current.filter((item) => item.accountId !== id))
-    },
-    [getIds, storageKey],
-  )
-
   return (
     <Context.Provider
-      value={{ accounts, profile, loading, error, refresh, rememberAccount, forgetAccount }}
+      value={{ accounts, transactionsByAccount, transactionErrors, transactionsLoading, profile, loading, error, refresh }}
     >
       {children}
     </Context.Provider>
