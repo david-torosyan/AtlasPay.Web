@@ -1,0 +1,52 @@
+# .NET build output
+**/bin/
+**/obj/
+artifacts/
+publish/
+
+# Visual Studio and user-specific files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Test and coverage output
+TestResults/
+coverage/
+coverage.*
+*.coverage
+*.coveragexml
+
+# Frontend dependencies and generated output
+ClientApp/node_modules/
+ClientApp/dist/
+ClientApp/*.tsbuildinfo
+ClientApp/vite.config.js
+ClientApp/vite.config.d.ts
+wwwroot/assets/
+wwwroot/index.html
+
+# Local configuration and secrets
+appsettings.Development.json
+appsettings.Local.json
+.env
+.env.*
+!.env.example
+
+# Logs and package-manager diagnostics
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor and OS metadata
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local Codex artifacts
+.codex-run/
