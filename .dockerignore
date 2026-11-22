@@ -3,6 +3,11 @@
 **/.vs/
 **/node_modules/
 **/dist/
+.codex-run/
+wwwroot/
+ClientApp/*.tsbuildinfo
+ClientApp/vite.config.js
+ClientApp/vite.config.d.ts
 .git/
 **/*.user
 **/.env

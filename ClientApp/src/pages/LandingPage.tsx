@@ -2,7 +2,7 @@ import { BadgeCheck, BellRing, Globe2, Heart, ShieldCheck, Sparkles, WalletCards
 import { useAuth } from 'react-oidc-context'
 import { Link } from 'react-router-dom'
 import { signIn } from '../session'
-import { AnimatedMoney } from '../components/AnimatedMoney'
+import { AccountPreview } from '../components/AccountPreview'
 import { ExchangePanel } from '../components/ExchangePanel'
 import { AppearanceControls } from '../components/WorkspaceTools'
 import { Logo } from '../components/Logo'
@@ -14,7 +14,7 @@ export function LandingPage() {
     <main><section className="hero"><div className="hero-copy"><span className="hero-pill"><Sparkles size={15} /> A little more life. A little less banking.</span><h1>Your money.<br />Your rhythm.<br /><em>More possibility<span className="hero-period">.</span></em></h1><p>Life doesn’t happen in spreadsheets. Meet a calmer, clearer home for your accounts, transfers, and everyday plans.</p><div className="hero-actions"><Link to="/register" className="button primary large">Find your everyday</Link><button className="button ghost large" onClick={() => void signIn(auth)}>I’m already here</button></div><div className="trust-row"><span><ShieldCheck /> Secure sign-in</span><span><BadgeCheck /> Your accounts, your control</span></div></div>
       <div className="hero-visual" aria-label="Illustrative AtlasPay workspace"><div className="hero-orbit-ring ring-one" aria-hidden="true" /><div className="hero-orbit-ring ring-two" aria-hidden="true" /><span className="hero-star star-one" aria-hidden="true">✳</span><span className="hero-star star-two" aria-hidden="true">✳</span>
         <div className="floating-caption caption-top"><span className="caption-icon"><Heart size={18} /></span><div><strong>Made for your everyday.</strong><small>And everything after.</small></div></div>
-        <div className="preview-window"><div className="preview-top"><Logo /><span className="avatar">YOU</span></div><div className="preview-greeting"><span>A fresh perspective.</span><strong>Make yourself at home.</strong></div><div className="preview-account"><div><span>Everyday account</span><WalletCards size={20} /></div><strong className="preview-balance"><AnimatedMoney value={24680.50} currency="USD" /></strong><small>USD · A little room to dream.</small><span className="preview-account-flower" aria-hidden="true">✳</span></div><div className="preview-activity"><span className="activity-icon"><BellRing size={19} /></span><div><strong>Your money, in view.</strong><small>Accounts. Transfers. A little clarity.</small></div></div><span className="preview-caption">Illustrative workspace · Sample balance</span></div>
+        <div className="preview-window"><div className="preview-top"><Logo /><span className="avatar">YOU</span></div><div className="preview-greeting"><span>A fresh perspective.</span><strong>Make yourself at home.</strong></div><AccountPreview /><div className="preview-activity"><span className="activity-icon"><BellRing size={19} /></span><div><strong>Your money, in view.</strong><small>Accounts. Transfers. A little clarity.</small></div></div><span className="preview-caption">Illustrative workspace · Sample balance</span></div>
         <div className="floating-caption caption-bottom"><span className="caption-currencies">$ € ֏</span><div><strong>Different currencies.</strong><small>One clear view.</small></div></div>
       </div>
     </section>
