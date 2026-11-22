@@ -15,7 +15,9 @@
     <None Include="ClientApp\**" Exclude="ClientApp\node_modules\**;ClientApp\dist\**" />
   </ItemGroup>
 
-  <Target Name="BuildClient" BeforeTargets="ComputeFilesToPublish">
+    <Target Name="BuildClient"
+            BeforeTargets="ComputeFilesToPublish"
+            Condition="'$(BuildClient)' != 'false'">
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm ci" />
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build" />
     <ItemGroup>

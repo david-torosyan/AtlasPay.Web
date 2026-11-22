@@ -18,6 +18,7 @@ public sealed class ApiOptions
 public sealed class KeycloakOptions
 {
     public string Authority { get; init; } = string.Empty;
+    public string? MetadataAddress { get; init; }
     public string TokenEndpoint { get; init; } = string.Empty;
     public string WebClientId { get; init; } = string.Empty;
     public string OnboardingClientId { get; init; } = string.Empty;

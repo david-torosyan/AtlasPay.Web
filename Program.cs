@@ -20,6 +20,8 @@ builder.Services.AddOptions<AtlasPayOptions>()
         Uri.TryCreate(options.Apis.FinanceBaseUrl, UriKind.Absolute, out _) &&
         Uri.TryCreate(options.Apis.NotificationBaseUrl, UriKind.Absolute, out _) &&
         Uri.TryCreate(options.Keycloak.Authority, UriKind.Absolute, out _) &&
+        (string.IsNullOrWhiteSpace(options.Keycloak.MetadataAddress) ||
+         Uri.TryCreate(options.Keycloak.MetadataAddress, UriKind.Absolute, out _)) &&
         Uri.TryCreate(options.Keycloak.TokenEndpoint, UriKind.Absolute, out _) &&
         !string.IsNullOrWhiteSpace(options.Keycloak.OnboardingClientSecret),
         "AtlasPay configuration is incomplete.")
@@ -38,6 +40,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.Authority = atlasPay.Keycloak.Authority;
+
+        if (!string.IsNullOrWhiteSpace(atlasPay.Keycloak.MetadataAddress))
+        {
+            options.MetadataAddress = atlasPay.Keycloak.MetadataAddress;
+        }
+
         options.RequireHttpsMetadata = false;
         options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
@@ -46,6 +54,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = false,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
+            ValidIssuer = atlasPay.Keycloak.Authority,
             NameClaimType = "preferred_username"
         };
     });
