@@ -10,10 +10,13 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useAuth } from 'react-oidc-context'
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { signOut } from '../session'
 import type { PublicConfig } from '../types'
 import { useAtlasState } from '../state'
 import { Logo } from './Logo'
+import { useDialogFocus } from './useDialogFocus'
+import { WorkspaceTools } from './WorkspaceTools'
 
 const links = [
   { to: '/dashboard', label: 'Overview', icon: LayoutDashboard, preload: () => import('../pages/DashboardPage') },
@@ -26,6 +29,16 @@ export function Shell({ config }: { config: PublicConfig }) {
   const auth = useAuth()
   const { profile } = useAtlasState()
   const [open, setOpen] = useState(false)
+  const menu = useDialogFocus(open, () => setOpen(false))
+  const [signingOut, setSigningOut] = useState(false)
+  const location = useLocation()
+  useEffect(() => { setOpen(false) }, [location.pathname])
+  useEffect(() => {
+    if (!open) return
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = previous }
+  }, [open])
   const name = auth.user?.profile.name || auth.user?.profile.preferred_username || 'AtlasPay customer'
   const initials = name
     .split(' ')
@@ -47,13 +60,15 @@ export function Shell({ config }: { config: PublicConfig }) {
 
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#workspace">Skip to content</a>
       <div className="app-ambient app-ambient-one" aria-hidden="true" />
       <div className="app-ambient app-ambient-two" aria-hidden="true" />
-      <aside className={`sidebar ${open ? 'sidebar-open' : ''}`}>
+      <aside ref={menu} id="banking-navigation" aria-label="Banking navigation" role={open ? 'dialog' : undefined} aria-modal={open || undefined} className={`sidebar ${open ? 'sidebar-open' : ''}`}>
         <div className="sidebar-head">
           <Logo />
           <button className="icon-button close-menu" onClick={() => setOpen(false)} aria-label="Close menu"><X /></button>
         </div>
+        <p className="sidebar-tagline">A little more possibility.</p>
         <nav className="main-nav" aria-label="Main navigation">
           <p className="nav-label">Banking</p>
           {links.map(({ to, label, icon: Icon, preload }) => (
@@ -62,6 +77,7 @@ export function Shell({ config }: { config: PublicConfig }) {
             </NavLink>
           ))}
         </nav>
+        <div className="sidebar-note"><span className="sidebar-note-art" aria-hidden="true">✳</span><strong>Make room for what matters.</strong><p>A calmer space for your everyday money.</p></div>
         <div className="sidebar-foot">
           <div className="mini-profile">
             <span className="avatar">{initials}</span>
@@ -69,19 +85,24 @@ export function Shell({ config }: { config: PublicConfig }) {
           </div>
           <button
             className="logout-button"
-            onClick={() => void auth.signoutRedirect({ post_logout_redirect_uri: config.postLogoutRedirectUrl })}
+            disabled={signingOut}
+            onClick={() => {
+              setSigningOut(true)
+              void signOut(auth, config.postLogoutRedirectUrl).catch(() => window.location.replace('/'))
+            }}
           >
             <LogOut size={18} /> Sign out
           </button>
         </div>
       </aside>
       {open && <button className="sidebar-scrim" onClick={() => setOpen(false)} aria-label="Close menu" />}
-      <main className="main-content">
+      <main className="main-content" id="workspace" tabIndex={-1} inert={open}>
         <header className="mobile-header">
-          <button className="icon-button" onClick={() => setOpen(true)} aria-label="Open menu"><Menu /></button>
+          <button className="icon-button" onClick={() => setOpen(true)} aria-label="Open menu" aria-expanded={open} aria-controls="banking-navigation"><Menu /></button>
           <Logo />
           <span className="avatar small"><UserRound size={17} /></span>
         </header>
+        <WorkspaceTools />
         <Outlet />
       </main>
     </div>

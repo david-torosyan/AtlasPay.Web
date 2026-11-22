@@ -1,4 +1,5 @@
 import { AlertCircle, CheckCircle2, LoaderCircle, X } from 'lucide-react'
+import { useDialogFocus } from './useDialogFocus'
 
 export function PageHeader({
   eyebrow,
@@ -38,9 +39,10 @@ export function Notice({ type = 'error', children, onClose }: { type?: 'error' |
 }
 
 export function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
+  const dialog = useDialogFocus(true, onClose)
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
-      <section className="modal" role="dialog" aria-modal="true" aria-label={title} onMouseDown={(event) => event.stopPropagation()}>
+      <section ref={dialog} className="modal" role="dialog" aria-modal="true" aria-label={title} onMouseDown={(event) => event.stopPropagation()}>
         <div className="modal-head"><h2>{title}</h2><button className="icon-button" onClick={onClose} aria-label="Close"><X /></button></div>
         {children}
       </section>
@@ -52,6 +54,12 @@ export function shortId(value: string) {
   return `${value.slice(0, 6)}…${value.slice(-4)}`
 }
 
+const moneyFormatters = new Map<string, Intl.NumberFormat>()
 export function money(value: number, currency: string) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(value)
+  let formatter = moneyFormatters.get(currency)
+  if (!formatter) {
+    formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency })
+    moneyFormatters.set(currency, formatter)
+  }
+  return formatter.format(value)
 }

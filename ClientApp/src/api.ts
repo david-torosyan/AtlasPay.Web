@@ -101,6 +101,12 @@ export function createApi(config: PublicConfig, token: string) {
         token,
         json({ requestId: crypto.randomUUID(), fromAccountId, toAccountId, amount, currency }),
       ),
+    reverseTransfer: (transferId: string, requestId: string, reason: string) =>
+      request<{ reversalId: string }>(
+        `${finance}/api/transfers/${encodeURIComponent(transferId)}/reverse`,
+        token,
+        json({ requestId, reason }),
+      ),
     getChannels: async () => {
       const values = await request<Array<{ channel: number; isActive: boolean }>>(
         `${notifications}/api/notification-channels`, token,

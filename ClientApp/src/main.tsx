@@ -7,6 +7,9 @@ import App from './App'
 import { loadConfig } from './config'
 import type { PublicConfig } from './types'
 import './styles.css'
+import './studio.css'
+import { oidcStatePrefix, returnPath } from './session'
+import { AppearanceProvider } from './appearance'
 
 function Bootstrap() {
   const [config, setConfig] = useState<PublicConfig>()
@@ -31,15 +34,18 @@ function Bootstrap() {
     accessTokenExpiringNotificationTimeInSeconds: 60,
     silentRequestTimeoutInSeconds: 10,
     monitorSession: true,
-    stateStore: new WebStorageStateStore({ store: window.sessionStorage }),
+    stateStore: new WebStorageStateStore({ store: window.sessionStorage, prefix: oidcStatePrefix }),
     userStore: new WebStorageStateStore({ store: new InMemoryWebStorage() }),
-    onSigninCallback: () => window.history.replaceState({}, document.title, '/dashboard'),
+    onSigninCallback: (user) => {
+      const state = user?.state as { returnUrl?: unknown } | undefined
+      window.history.replaceState({}, document.title, returnPath(state?.returnUrl))
+    },
   }
 
   return (
     <AuthProvider {...oidcConfig}>
       <BrowserRouter>
-        <App config={config} />
+        <AppearanceProvider><App config={config} /></AppearanceProvider>
       </BrowserRouter>
     </AuthProvider>
   )

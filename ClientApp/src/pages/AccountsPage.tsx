@@ -1,8 +1,10 @@
-import { Copy, Plus, RefreshCw, WalletCards } from 'lucide-react'
+import { AnimatedMoney } from '../components/AnimatedMoney'
+import { Copy, Plus, RefreshCw, WalletCards, Snowflake, Sun, Sparkles, Send, Check } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { FormEvent, useMemo, useState } from 'react'
 import { useAuth } from 'react-oidc-context'
 import { createApi } from '../api'
-import { EmptyState, LoadingBlock, Modal, money, Notice, PageHeader, shortId } from '../components/Common'
+import { EmptyState, LoadingBlock, Modal, Notice, PageHeader, shortId } from '../components/Common'
 import { useAtlasState } from '../state'
 import type { Currency, PublicConfig } from '../types'
 
@@ -13,6 +15,9 @@ export function AccountsPage({ config }: { config: PublicConfig }) {
   const [modalOpen, setModalOpen] = useState(false)
   const [currency, setCurrency] = useState<Currency>('USD')
   const [busy, setBusy] = useState(false)
+  const [filter, setFilter] = useState('All')
+  const [copied, setCopied] = useState<string>()
+  const visible = filter === 'All' ? accounts : accounts.filter(account => account.status === filter)
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string }>()
 
   async function create(event: FormEvent) {
@@ -36,22 +41,25 @@ export function AccountsPage({ config }: { config: PublicConfig }) {
   if (loading) return <div className="page"><LoadingBlock /></div>
   return (
     <div className="page">
-      <PageHeader eyebrow="Money" title="Your accounts" description="Create accounts, check balances, and control account status." action={<button className="button primary" onClick={() => setModalOpen(true)}><Plus size={18} /> New account</button>} />
+      <PageHeader eyebrow="Different currencies. Same possibilities." title="A place for every plan." description="Your accounts, beautifully together. Make each one work for you." action={<button className="button primary" onClick={() => setModalOpen(true)}><Plus size={18} /> Open an account</button>} />
       {error && <Notice>{error}</Notice>}{message && <Notice type={message.type} onClose={() => setMessage(undefined)}>{message.text}</Notice>}
-      {accounts.length ? <section className="account-grid">{accounts.map((account, index) => (
+      {accounts.length > 0 && <div className="account-collection-tools"><div className="history-filters" role="group" aria-label="Filter accounts">{['All', 'Active', 'Pending', 'Frozen', 'Closed'].map(status => <button key={status} aria-pressed={filter === status} className={filter === status ? 'active' : ''} onClick={() => setFilter(status)}>{status}<span>{status === 'All' ? accounts.length : accounts.filter(account => account.status === status).length}</span></button>)}</div><span>{new Set(accounts.map(account => account.currency)).size} currencies · One workspace</span></div>}
+      {accounts.length ? visible.length ? <section className="account-grid">{visible.map((account, index) => (
         <article className={`bank-card color-${index % 3}`} key={account.accountId}>
-          <div className="bank-card-top"><span className="account-currency">{account.currency}</span><span className={`status ${account.status.toLowerCase()}`}>{account.status}</span></div>
-          <p>Available balance</p><strong>{money(account.balance, account.currency)}</strong>
-          <div className="account-number"><span>{shortId(account.accountId)}</span><button className="icon-button" onClick={() => void navigator.clipboard.writeText(account.accountId)} aria-label="Copy account ID"><Copy size={16} /></button></div>
+          <span className="bank-card-watermark" aria-hidden="true">{account.currency === 'USD' ? '$' : account.currency === 'EUR' ? '€' : '֏'}</span>
+          <div className="bank-card-top"><span className="account-currency"><WalletCards size={18} /> {account.currency} account</span><span className={`status ${account.status.toLowerCase()}`}>{account.status}</span></div>
+          <p>Available balance</p><strong><AnimatedMoney value={account.balance} currency={account.currency} /></strong>
+          <div className="account-number"><span>{shortId(account.accountId)}</span><button className="icon-button" onClick={() => void navigator.clipboard.writeText(account.accountId).then(() => { setCopied(account.accountId); setMessage({ type: 'success', text: 'Account ID copied. Ready whenever you are.' }) }).catch(() => setMessage({ type: 'error', text: 'Copy is unavailable in this browser. You can select the account ID from your transfer details.' }))} aria-label="Copy account ID">{copied === account.accountId ? <Check size={16} /> : <Copy size={16} />}</button></div>
           <div className="bank-card-actions">
-            {account.status === 'Pending' && <button disabled={busy} onClick={() => void setStatus(account.accountId, 'activate')}>Activate</button>}
-            {account.status === 'Active' && <button disabled={busy} onClick={() => void setStatus(account.accountId, 'freeze')}>Freeze</button>}
-            {account.status === 'Frozen' && <button disabled={busy} onClick={() => void setStatus(account.accountId, 'unfreeze')}>Unfreeze</button>}
-            <button onClick={() => void refresh()}><RefreshCw size={15} /> Refresh</button>
+            {account.status === 'Pending' && <button disabled={busy} onClick={() => void setStatus(account.accountId, 'activate')}><Sparkles size={15} /> Activate</button>}
+            {account.status === 'Active' && <button disabled={busy} onClick={() => void setStatus(account.accountId, 'freeze')}><Snowflake size={15} /> Freeze</button>}
+            {account.status === 'Frozen' && <button disabled={busy} onClick={() => void setStatus(account.accountId, 'unfreeze')}><Sun size={15} /> Unfreeze</button>}
+            <button disabled={busy} onClick={() => void refresh()}><RefreshCw size={15} /> Refresh</button>
+            {account.status === 'Active' && <Link to={`/payments?type=transfer&account=${encodeURIComponent(account.accountId)}`}><Send size={15} /> Send</Link>}
           </div>
         </article>
-      ))}</section> : <EmptyState icon={<WalletCards />} title="No accounts yet" message="Create your first AtlasPay account to get started." action={<button className="button primary" onClick={() => setModalOpen(true)}><Plus size={18} /> Create account</button>} />}
-      {modalOpen && <Modal title="Create a new account" onClose={() => setModalOpen(false)}><form onSubmit={create}><label>Currency<select value={currency} onChange={(e) => setCurrency(e.target.value as Currency)}><option>USD</option><option>EUR</option><option>AMD</option></select></label><p className="form-hint">New accounts start pending. You can activate the account from this page.</p><div className="modal-actions"><button type="button" className="button ghost" onClick={() => setModalOpen(false)}>Cancel</button><button className="button primary" disabled={busy}>Create account</button></div></form></Modal>}
+      ))}</section> : <EmptyState icon={<WalletCards />} title={`No ${filter.toLowerCase()} accounts.`} message="Your other accounts are a tap away." action={<button className="button secondary" onClick={() => setFilter('All')}>See all accounts</button>} /> : <EmptyState icon={<WalletCards />} title="Every plan needs a place to start." message="Open your first AtlasPay account and make a little room for possibility." action={<button className="button primary" onClick={() => setModalOpen(true)}><Plus size={18} /> Open an account</button>} />}
+      {modalOpen && <Modal title="Make room for something new." onClose={() => { if (!busy) setModalOpen(false) }}><p className="modal-description">Pick a currency for your next chapter.</p><form onSubmit={create}><div className="currency-options" role="group" aria-label="New account currency">{(['USD', 'EUR', 'AMD'] as Currency[]).map(value => <button key={value} type="button" aria-pressed={currency === value} className={currency === value ? 'selected' : ''} onClick={() => setCurrency(value)}><span>{value === 'USD' ? '$' : value === 'EUR' ? '€' : '֏'}</span><strong>{value}</strong><small>{value === 'USD' ? 'US dollar' : value === 'EUR' ? 'Euro' : 'Armenian dram'}</small></button>)}</div><p className="form-hint">Your new account starts pending. Activate it here whenever you’re ready.</p><div className="modal-actions"><button type="button" className="button ghost" disabled={busy} onClick={() => setModalOpen(false)}>Maybe later</button><button className="button primary" disabled={busy}>{busy ? 'Opening…' : 'Open account'}</button></div></form></Modal>}
     </div>
   )
 }

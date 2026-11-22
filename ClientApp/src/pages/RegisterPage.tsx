@@ -1,3 +1,4 @@
+import { signIn } from '../session'
 import { Check, ChevronLeft, LoaderCircle, LockKeyhole, MailCheck } from 'lucide-react'
 import { FormEvent, useState } from 'react'
 import { useAuth } from 'react-oidc-context'
@@ -47,12 +48,12 @@ export function RegisterPage() {
               <p className="form-hint">We’ll email you a secure link to verify your address and choose a password.</p>
               <button className="button primary full" disabled={submitting}>{submitting && <LoaderCircle className="spin" />} Create account</button>
             </form>
-            <p className="auth-switch">Already activated? <button className="inline-button" onClick={() => void auth.signinRedirect()}>Sign in</button></p>
+            <p className="auth-switch">Already activated? <button className="inline-button" onClick={() => void signIn(auth)}>Sign in</button></p>
           </div>
         ) : (
           <div className="auth-card activation-card">
             <span className="activation-icon"><MailCheck /></span><span className="eyebrow">One more step</span><h2>Check your inbox</h2><p>We sent an activation link to <strong>{registeredEmail}</strong>. Verify your email and choose a password in Keycloak, then come back to sign in.</p>
-            <button className="button primary full" onClick={() => void auth.signinRedirect()}>Continue to sign in</button><Link to="/" className="button ghost full">Return home</Link>
+            <button className="button primary full" onClick={() => void signIn(auth)}>Continue to sign in</button><Link to="/" className="button ghost full">Return home</Link>
           </div>
         )}
       </main>
